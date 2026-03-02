@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minimum-Phase &amp; Maximum-Phase Filters — An Interactive Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0e13;
+  --bg2: #12151c;
+  --bg3: #181c26;
+  --fg: #d8dce6;
+  --fg-dim: #7a8299;
+  --accent: #5eead4;
+  --accent2: #f472b6;
+  --accent3: #fbbf24;
+  --accent4: #818cf8;
+  --grid: rgba(94,234,212,0.06);
+  --border: rgba(94,234,212,0.12);
+  --serif: 'EB Garamond', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(94,234,212,0.07), transparent),
+    radial-gradient(ellipse 50% 40% at 30% 70%, rgba(129,140,248,0.05), transparent),
+    radial-gradient(ellipse 50% 40% at 70% 70%, rgba(244,114,182,0.05), transparent);
+  pointer-events: none;
+}
+
+.hero-label {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.2s forwards;
+}
+
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  max-width: 900px;
+  background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.4s forwards;
+}
+
+.hero-sub {
+  font-size: 1.15rem;
+  color: var(--fg-dim);
+  max-width: 560px;
+  margin-top: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.6s forwards;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--fg-dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-family: var(--mono);
+  opacity: 0;
+  animation: fadeUp 0.8s 1s forwards;
+}
+
+.scroll-hint .arrow {
+  width: 20px;
+  height: 20px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(45deg);
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: rotate(45deg) translateY(0); }
+  50% { transform: rotate(45deg) translateY(6px); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* LAYOUT */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+section {
+  padding: 6rem 0;
+  position: relative;
+}
+
+section + section { border-top: 1px solid var(--border); }
+
+h2 {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1.5rem;
+}
+
+h3 {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 2.5rem 0 1rem;
+}
+
+p { margin-bottom: 1.2rem; color: var(--fg); }
+
+.highlight { color: var(--accent); font-weight: 600; }
+.highlight-pink { color: var(--accent2); font-weight: 600; }
+.highlight-gold { color: var(--accent3); font-weight: 600; }
+
+code, .math {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: var(--bg3);
+  padding: 0.15em 0.45em;
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+.equation-block {
+  display: block;
+  text-align: center;
+  margin: 2rem 0;
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  color: var(--accent);
+  padding: 1.5rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+/* CANVAS CARDS */
+.viz-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.viz-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.viz-card .card-title {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+canvas {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+/* CONTROLS */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+  align-items: center;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.control-group label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 180px;
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(94,234,212,0.4);
+}
+
+.btn-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+button {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  padding: 0.5rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg3);
+  color: var(--fg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover { border-color: var(--accent); color: var(--accent); }
+button.active { background: rgba(94,234,212,0.12); border-color: var(--accent); color: var(--accent); }
+
+/* COMPARISON TABLE */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  font-size: 0.95rem;
+}
+
+.compare-table th, .compare-table td {
+  padding: 1rem 1.2rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-table th {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+.compare-table td:first-child { color: #fff; font-weight: 600; }
+
+/* KEY INSIGHT CALLOUT */
+.callout {
+  background: linear-gradient(135deg, rgba(94,234,212,0.06), rgba(129,140,248,0.06));
+  border-left: 3px solid var(--accent);
+  padding: 1.5rem 2rem;
+  border-radius: 0 12px 12px 0;
+  margin: 2rem 0;
+}
+
+.callout-title {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 4rem 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--fg-dim);
+  font-size: 0.85rem;
+}
+
+footer a { color: var(--accent); text-decoration: none; }
+
+/* NAV */
+.toc {
+  position: fixed;
+  top: 50%;
+  right: 1.5rem;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  z-index: 100;
+}
+
+.toc a {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fg-dim);
+  opacity: 0.3;
+  transition: all 0.3s;
+  display: block;
+}
+
+.toc a.active { opacity: 1; background: var(--accent); box-shadow: 0 0 8px rgba(94,234,212,0.5); transform: scale(1.4); }
+
+/* FADE-IN ON SCROLL */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .toc { display: none; }
+  input[type="range"] { width: 140px; }
+  .controls { gap: 0.6rem; }
+  section { padding: 4rem 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- TABLE OF CONTENTS DOTS -->
+<nav class="toc" id="toc"></nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">An Interactive Guide</div>
+  <h1>Minimum-Phase &amp; Maximum-Phase Filters</h1>
+  <p class="hero-sub">Explore the z-plane, watch poles and zeros move, and build intuition for how filter phase behaviour shapes signals.</p>
+  <div class="scroll-hint">
+    <span>Scroll to explore</span>
+    <div class="arrow"></div>
+  </div>
+</div>
+
+<!-- SECTION 1: WHAT IS PHASE? -->
+<section id="sec-intro" data-title="Introduction">
+<div class="container reveal">
+  <h2>Why Does Phase Matter?</h2>
+  <p>Every digital filter has two faces: its <span class="highlight">magnitude response</span> (how much it boosts or attenuates each frequency) and its <span class="highlight-pink">phase response</span> (how much it delays each frequency). Two filters can share the exact same magnitude response yet sound and behave completely differently, because their phase responses differ.</p>
+  <p>The key insight is that for any given magnitude response, there are <em>many</em> filters that can produce it. Among all of them, the <span class="highlight">minimum-phase</span> filter is special: it concentrates energy earliest in time and has the smallest total phase shift. The <span class="highlight-pink">maximum-phase</span> filter is its mirror — it pushes energy as late as possible.</p>
+
+  <div class="callout">
+    <div class="callout-title">Key Concept</div>
+    <p style="margin:0">A causal, stable filter's phase behaviour is entirely determined by where its <strong>zeros</strong> sit relative to the unit circle in the z-plane. Zeros inside → minimum phase. Zeros outside → maximum phase.</p>
+  </div>
+</div>
+</section>
+
+<!-- SECTION 2: THE Z-PLANE -->
+<section id="sec-zplane" data-title="The Z-Plane">
+<div class="container reveal">
+  <h2>The Z-Plane: Poles, Zeros &amp; the Unit Circle</h2>
+  <p>A discrete-time transfer function <code>H(z)</code> is a ratio of polynomials in z. The roots of the numerator are <span class="highlight">zeros</span> and the roots of the denominator are <span class="highlight-pink">poles</span>. The unit circle <code>|z| = 1</code> is where we evaluate the frequency response.</p>
+
+  <div class="equation-block">
+    H(z) = b₀ · ∏(z − zₖ) / ∏(z − pₖ)
+  </div>
+
+  <p>Drag the zero in the visualisation below to see how its position relative to the unit circle changes the filter's impulse response and phase.</p>
+
+  <div class="viz-card">
+    <div class="card-title">Interactive Z-Plane — Drag the Zero</div>
+    <canvas id="czplane" height="440"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>Zero Radius: <span id="zrVal">0.70</span></label>
+        <input type="range" id="zrSlider" min="0.1" max="1.9" step="0.01" value="0.70">
+      </div>
+      <div class="control-group">
+        <label>Zero Angle: <span id="zaVal">45°</span></label>
+        <input type="range" id="zaSlider" min="5" max="175" step="1" value="45">
+      </div>
+      <div class="btn-row">
+        <button id="btnAnimateFlip">▶ Animate Inside↔Outside</button>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SECTION 3: MIN vs MAX PHASE -->
+<section id="sec-compare" data-title="Min vs Max Phase">
+<div class="container reveal">
+  <h2>Minimum-Phase vs Maximum-Phase</h2>
+  <p>Given a zero at position <code>z₀</code>, we can reflect it to <code>1/z₀*</code> (its conjugate-reciprocal) without changing the magnitude response. But the phase and impulse response change dramatically.</p>
+
+  <div class="viz-card">
+    <div class="card-title">Side-by-Side Comparison — Impulse &amp; Phase</div>
+    <canvas id="ccompare" height="520"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>Zero Radius: <span id="crVal">0.6</span></label>
+        <input type="range" id="crSlider" min="0.15" max="0.95" step="0.01" value="0.6">
+      </div>
+      <div class="control-group">
+        <label>Zero Angle: <span id="caVal">60°</span></label>
+        <input type="range" id="caSlider" min="10" max="170" step="1" value="60">
+      </div>
+      <div class="btn-row">
+        <button id="btnAnimateSweep">▶ Sweep Radius</button>
+      </div>
+    </div>
+  </div>
+
+  <h3>The Trade-Off</h3>
+  <table class="compare-table">
+    <thead>
+      <tr><th>Property</th><th>Minimum-Phase</th><th>Maximum-Phase</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Zero location</td><td>Inside the unit circle</td><td>Outside the unit circle</td></tr>
+      <tr><td>Phase lag</td><td>Smallest possible</td><td>Largest possible</td></tr>
+      <tr><td>Group delay</td><td>Minimum total</td><td>Maximum total</td></tr>
+      <tr><td>Energy concentration</td><td>Front-loaded (causal)</td><td>Back-loaded</td></tr>
+      <tr><td>Causal &amp; stable inverse</td><td>Yes ✓</td><td>No ✗</td></tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+<!-- SECTION 4: ALLPASS DECOMPOSITION -->
+<section id="sec-allpass" data-title="Allpass Decomposition">
+<div class="container reveal">
+  <h2>Allpass Decomposition</h2>
+  <p>Any causal stable filter can be decomposed into a <span class="highlight">minimum-phase component</span> cascaded with an <span class="highlight-gold">allpass filter</span>:</p>
+
+  <div class="equation-block">
+    H(z) = H_min(z) · H_ap(z)
+  </div>
+
+  <p>The allpass filter has magnitude 1 everywhere — it only adds phase. This means the minimum-phase version has <em>exactly</em> the same magnitude response as the original, but with the least possible phase lag.</p>
+
+  <div class="viz-card">
+    <div class="card-title">Allpass Filter — Phase-Only Modification</div>
+    <canvas id="callpass" height="400"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>Allpass Coeff (a): <span id="apVal">0.50</span></label>
+        <input type="range" id="apSlider" min="-0.95" max="0.95" step="0.01" value="0.5">
+      </div>
+      <div class="btn-row">
+        <button id="btnAnimateAP">▶ Animate Coefficient</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Practical Significance</div>
+    <p style="margin:0">Minimum-phase filters are prized in audio, control systems, and geophysics because they are <strong>invertible</strong>. If a channel or system is minimum-phase, you can perfectly undo its effect with a causal, stable inverse filter. Maximum-phase components require non-causal processing to invert.</p>
+  </div>
+</div>
+</section>
+
+<!-- SECTION 5: GROUP DELAY -->
+<section id="sec-gd" data-title="Group Delay">
+<div class="container reveal">
+  <h2>Group Delay</h2>
+  <p>Group delay is the negative derivative of phase with respect to frequency: <code>τ(ω) = −dφ/dω</code>. It tells you how much each frequency component is delayed by the filter. Minimum-phase filters have the smallest total group delay for a given magnitude response.</p>
+
+  <div class="viz-card">
+    <div class="card-title">Group Delay Comparison</div>
+    <canvas id="cgdelay" height="400"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>Zero Radius: <span id="gdVal">0.7</span></label>
+        <input type="range" id="gdSlider" min="0.15" max="0.95" step="0.01" value="0.7">
+      </div>
+      <div class="btn-row">
+        <button id="btnAnimateGD">▶ Animate</button>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SECTION 6: MIXED PHASE & REAL-WORLD -->
+<section id="sec-mixed" data-title="Mixed Phase">
+<div class="container reveal">
+  <h2>Mixed-Phase &amp; Real-World Filters</h2>
+  <p>Most real-world systems are <span class="highlight-gold">mixed-phase</span>: they contain some zeros inside and some outside the unit circle. The allpass decomposition still works — the minimum-phase factor gathers all zeros inside, and the allpass factor accounts for the rest.</p>
+
+  <h3>Where This Matters</h3>
+  <p><strong>Audio &amp; Acoustics:</strong> Room impulse responses are typically mixed-phase. Minimum-phase equalisation is used to correct magnitude without adding latency.</p>
+  <p><strong>Seismology:</strong> The earth's impulse response is assumed minimum-phase in deconvolution algorithms used to locate oil and gas reserves.</p>
+  <p><strong>Control Systems:</strong> Non-minimum-phase plants (with right-half-plane zeros in continuous time) impose fundamental limits on achievable bandwidth.</p>
+  <p><strong>Communications:</strong> Channel equalisation exploits minimum-phase structure for efficient, causal inverse filtering.</p>
+
+  <div class="callout">
+    <div class="callout-title">Summary</div>
+    <p style="margin:0">Minimum-phase means <em>all zeros inside the unit circle</em> — giving minimum phase lag, minimum group delay, front-loaded energy, and a stable causal inverse. Maximum-phase is the opposite extreme. Understanding where zeros sit is the key to understanding how a filter shapes signals in time.</p>
+  </div>
+</div>
+</section>
+
+<footer>
+  <p>Interactive guide built for educational use. No external dependencies.<br>
+  Created with care for engineers, students, and the signal-processing-curious.</p>
+</footer>
+
+<script>
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+const TAU = Math.PI * 2;
+const dpr = window.devicePixelRatio || 1;
+
+function setupCanvas(id) {
+  const c = document.getElementById(id);
+  const rect = c.getBoundingClientRect();
+  c.width = rect.width * dpr;
+  c.height = rect.height * dpr;
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { c, ctx, w: rect.width, h: rect.height };
+}
+
+function complexMul(a, b) { return [a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]]; }
+function complexDiv(a, b) { const d=b[0]*b[0]+b[1]*b[1]; return [(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d]; }
+function complexMag(a) { return Math.sqrt(a[0]*a[0]+a[1]*a[1]); }
+function complexArg(a) { return Math.atan2(a[1], a[0]); }
+
+// Evaluate FIR H(z) = b[0] + b[1]*z^-1 + ... at z = e^{jw}
+function evalPoly(coeffs, w) {
+  let re = 0, im = 0;
+  for (let k = 0; k < coeffs.length; k++) {
+    re += coeffs[k] * Math.cos(-k * w);
+    im += coeffs[k] * Math.sin(-k * w);
+  }
+  return [re, im];
+}
+
+// For a single-zero FIR: H(z) = 1 - z0*z^-1 (with conjugate pair)
+function evalZeroPair(r, angle, w) {
+  // H(z) = (1 - z0 * z^-1)(1 - z0* * z^-1)
+  const z0re = r * Math.cos(angle), z0im = r * Math.sin(angle);
+  const ejw = [Math.cos(w), Math.sin(w)];
+  const ejnw = [Math.cos(-w), Math.sin(-w)];
+  // (z - z0)/z = 1 - z0*z^-1
+  const f1 = [1 - z0re * ejnw[0] + z0im * ejnw[1], -z0re * ejnw[1] - z0im * ejnw[0]];
+  const f2 = [1 - z0re * ejnw[0] - z0im * ejnw[1], -z0re * ejnw[1] + z0im * ejnw[0]];
+  return complexMul(f1, f2);
+}
+
+// Impulse response of (1 - z0*z^-1)(1 - z0conj*z^-1) = 1 - 2*Re(z0)*z^-1 + |z0|^2 * z^-2
+function irZeroPair(r, angle) {
+  return [1, -2 * r * Math.cos(angle), r * r];
+}
+
+// Colors
+const COL = {
+  accent: '#5eead4', pink: '#f472b6', gold: '#fbbf24', purple: '#818cf8',
+  grid: 'rgba(94,234,212,0.08)', gridLine: 'rgba(94,234,212,0.15)',
+  bg: '#12151c', text: '#7a8299', white: '#d8dce6'
+};
+
+// ============================================================
+// SECTION 2: INTERACTIVE Z-PLANE
+// ============================================================
+(function() {
+  let { ctx, w, h } = setupCanvas('czplane');
+  const zrSlider = document.getElementById('zrSlider');
+  const zaSlider = document.getElementById('zaSlider');
+  const zrVal = document.getElementById('zrVal');
+  const zaVal = document.getElementById('zaVal');
+  const btnFlip = document.getElementById('btnAnimateFlip');
+  let animating = false, animFrame = 0;
+
+  function draw() {
+    const r = parseFloat(zrSlider.value);
+    const angle = parseFloat(zaSlider.value) * Math.PI / 180;
+    zrVal.textContent = r.toFixed(2);
+    zaVal.textContent = zaSlider.value + '°';
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Layout: left = z-plane, right top = magnitude, right bottom = impulse
+    const zpCx = w * 0.28, zpCy = h * 0.5, zpR = Math.min(w * 0.22, h * 0.4);
+    const plotL = w * 0.54, plotR = w - 20, plotH = h * 0.38;
+    const magTop = 30, irTop = h * 0.55;
+
+    // --- Z-PLANE ---
+    // Grid
+    ctx.strokeStyle = COL.gridLine;
+    ctx.lineWidth = 0.5;
+    for (let i = 1; i <= 3; i++) {
+      ctx.beginPath();
+      ctx.arc(zpCx, zpCy, zpR * i * 0.5, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.moveTo(zpCx - zpR * 1.5, zpCy);
+    ctx.lineTo(zpCx + zpR * 1.5, zpCy);
+    ctx.moveTo(zpCx, zpCy - zpR * 1.5);
+    ctx.lineTo(zpCx, zpCy + zpR * 1.5);
+    ctx.stroke();
+
+    // Unit circle
+    ctx.strokeStyle = COL.accent;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(zpCx, zpCy, zpR, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Label
+    ctx.fillStyle = COL.text;
+    ctx.font = '11px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText('|z|=1', zpCx + zpR + 16, zpCy - 4);
+    ctx.fillText('Re', zpCx + zpR * 1.45, zpCy + 14);
+    ctx.fillText('Im', zpCx + 10, zpCy - zpR * 1.35);
+
+    // Zeros (conjugate pair)
+    const zx = zpCx + r * Math.cos(angle) * zpR;
+    const zy1 = zpCy - r * Math.sin(angle) * zpR;
+    const zy2 = zpCy + r * Math.sin(angle) * zpR;
+
+    // Phase indicator: shade inside vs outside
+    const isMinPhase = r < 1;
+    const zCol = isMinPhase ? COL.accent : COL.pink;
+    const label = isMinPhase ? 'MIN-PHASE' : (r > 1 ? 'MAX-PHASE' : 'ON UNIT CIRCLE');
+
+    // Draw zeros
+    ctx.strokeStyle = zCol;
+    ctx.lineWidth = 2.5;
+    const zs = 7;
+    // Zero 1
+    ctx.beginPath(); ctx.moveTo(zx-zs,zy1-zs); ctx.lineTo(zx+zs,zy1+zs); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(zx+zs,zy1-zs); ctx.lineTo(zx-zs,zy1+zs); ctx.stroke();
+    // Zero 2
+    ctx.beginPath(); ctx.moveTo(zx-zs,zy2-zs); ctx.lineTo(zx+zs,zy2+zs); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(zx+zs,zy2-zs); ctx.lineTo(zx-zs,zy2+zs); ctx.stroke();
+
+    // Glow
+    ctx.shadowColor = zCol;
+    ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(zx, zy1, 3, 0, TAU); ctx.fillStyle = zCol; ctx.fill();
+    ctx.beginPath(); ctx.arc(zx, zy2, 3, 0, TAU); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Label
+    ctx.fillStyle = zCol;
+    ctx.font = 'bold 12px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, zpCx, zpCy + zpR * 1.55);
+
+    // --- MAGNITUDE RESPONSE ---
+    const N = 256;
+    ctx.fillStyle = COL.text;
+    ctx.font = '10px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText('MAGNITUDE RESPONSE (dB)', (plotL + plotR) / 2, magTop - 8);
+
+    // Axes
+    ctx.strokeStyle = COL.gridLine;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(plotL, magTop); ctx.lineTo(plotL, magTop + plotH);
+    ctx.lineTo(plotR, magTop + plotH);
+    ctx.stroke();
+
+    // Mag plot
+    let magData = [];
+    for (let i = 0; i <= N; i++) {
+      const ww = Math.PI * i / N;
+      const H = evalZeroPair(r, angle, ww);
+      magData.push(20 * Math.log10(Math.max(complexMag(H), 1e-10)));
+    }
+    const magMin = Math.min(...magData) - 2;
+    const magMax = Math.max(...magData) + 2;
+
+    ctx.beginPath();
+    ctx.strokeStyle = zCol;
+    ctx.lineWidth = 2;
+    for (let i = 0; i <= N; i++) {
+      const x = plotL + (plotR - plotL) * i / N;
+      const y = magTop + plotH - (magData[i] - magMin) / (magMax - magMin) * plotH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle = COL.text;
+    ctx.font = '9px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.fillText(magMax.toFixed(0) + 'dB', plotL + 4, magTop + 12);
+    ctx.fillText(magMin.toFixed(0) + 'dB', plotL + 4, magTop + plotH - 4);
+    ctx.textAlign = 'center';
+    ctx.fillText('0', plotL, magTop + plotH + 14);
+    ctx.fillText('π', plotR, magTop + plotH + 14);
+
+    // --- IMPULSE RESPONSE ---
+    ctx.fillStyle = COL.text;
+    ctx.font = '10px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText('IMPULSE RESPONSE', (plotL + plotR) / 2, irTop - 8);
+
+    const ir = irZeroPair(r, angle);
+    const irMax = Math.max(...ir.map(Math.abs)) * 1.2;
+    const irBarW = Math.min(30, (plotR - plotL) / (ir.length * 2));
+    const irMid = irTop + plotH * 0.5;
+
+    // Zero line
+    ctx.strokeStyle = COL.gridLine;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(plotL, irMid);
+    ctx.lineTo(plotR, irMid);
+    ctx.stroke();
+
+    ir.forEach((v, i) => {
+      const x = plotL + 40 + i * 60;
+      const bh = (v / irMax) * plotH * 0.45;
+      ctx.fillStyle = v >= 0 ? COL.accent : COL.pink;
+      ctx.globalAlpha = 0.8;
+      ctx.fillRect(x - irBarW/2, irMid, irBarW, -bh);
+      ctx.globalAlpha = 1;
+
+      // Stem
+      ctx.strokeStyle = v >= 0 ? COL.accent : COL.pink;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x, irMid); ctx.lineTo(x, irMid - bh); ctx.stroke();
+
+      // Dot
+      ctx.beginPath(); ctx.arc(x, irMid - bh, 4, 0, TAU);
+      ctx.fillStyle = v >= 0 ? COL.accent : COL.pink;
+      ctx.fill();
+
+      ctx.fillStyle = COL.white;
+      ctx.font = '10px "JetBrains Mono"';
+      ctx.textAlign = 'center';
+      ctx.fillText('h[' + i + ']=' + v.toFixed(2), x, irMid + 20);
+    });
+
+    ctx.fillStyle = COL.text;
+    ctx.font = '9px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.fillText('n →', plotR - 20, irMid + 14);
+  }
+
+  zrSlider.oninput = draw;
+  zaSlider.oninput = draw;
+
+  // Animation: flip zero inside ↔ outside
+  btnFlip.onclick = function() {
+    if (animating) return;
+    animating = true;
+    const startR = parseFloat(zrSlider.value);
+    const targetR = startR < 1 ? 1.5 : 0.5;
+    const duration = 2000;
+    const start = performance.now();
+    function step(t) {
+      const p = Math.min((t - start) / duration, 1);
+      const ease = p < 0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+      zrSlider.value = startR + (targetR - startR) * ease;
+      draw();
+      if (p < 1) requestAnimationFrame(step);
+      else animating = false;
+    }
+    requestAnimationFrame(step);
+  };
+
+  draw();
+  window.addEventListener('resize', () => {
+    ({ ctx, w, h } = setupCanvas('czplane'));
+    draw();
+  });
+})();
+
+// ============================================================
+// SECTION 3: SIDE-BY-SIDE COMPARISON
+// ============================================================
+(function() {
+  let { ctx, w, h } = setupCanvas('ccompare');
+  const crSlider = document.getElementById('crSlider');
+  const caSlider = document.getElementById('caSlider');
+  const crVal = document.getElementById('crVal');
+  const caVal = document.getElementById('caVal');
+  const btnSweep = document.getElementById('btnAnimateSweep');
+  let animating = false;
+
+  function draw() {
+    const r = parseFloat(crSlider.value);
+    const angle = parseFloat(caSlider.value) * Math.PI / 180;
+    crVal.textContent = r.toFixed(2);
+    caVal.textContent = caSlider.value + '°';
+    const rMax = 1 / r; // conjugate reciprocal radius
+
+    ctx.clearRect(0, 0, w, h);
+
+    const N = 256;
+    const midX = w / 2;
+    const colL = 20, colR = midX - 15;
+    const colL2 = midX + 15, colR2 = w - 20;
+    const row1T = 40, row1H = h * 0.38;
+    const row2T = h * 0.52, row2H = h * 0.38;
+
+    // Headers
+    ctx.fillStyle = COL.accent;
+    ctx.font = 'bold 12px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText('MINIMUM-PHASE (r=' + r.toFixed(2) + ')', (colL + colR) / 2, 20);
+    ctx.fillStyle = COL.pink;
+    ctx.fillText('MAXIMUM-PHASE (r=' + rMax.toFixed(2) + ')', (colL2 + colR2) / 2, 20);
+
+    // Row labels
+    ctx.fillStyle = COL.text;
+    ctx.font = '9px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.fillText('IMPULSE RESPONSE', colL, row1T - 4);
+    ctx.fillText('IMPULSE RESPONSE', colL2, row1T - 4);
+    ctx.fillText('PHASE RESPONSE', colL, row2T - 4);
+    ctx.fillText('PHASE RESPONSE', colL2, row2T - 4);
+
+    // Compute data
+    const irMin = irZeroPair(r, angle);
+    const irMaxArr = irZeroPair(rMax, angle);
+    const irAllMax = Math.max(...irMin.map(Math.abs), ...irMaxArr.map(Math.abs)) * 1.3;
+
+    function drawIR(ir, x1, x2, yMid, color) {
+      // Zero line
+      ctx.strokeStyle = COL.gridLine;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(x1, yMid); ctx.lineTo(x2, yMid); ctx.stroke();
+
+      const barW = 18;
+      ir.forEach((v, i) => {
+        const x = x1 + 40 + i * 55;
+        const bh = (v / irAllMax) * row1H * 0.42;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x, yMid); ctx.lineTo(x, yMid - bh); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, yMid - bh, 5, 0, TAU);
+        ctx.fillStyle = color; ctx.fill();
+
+        ctx.fillStyle = COL.white;
+        ctx.font = '9px "JetBrains Mono"';
+        ctx.textAlign = 'center';
+        ctx.fillText(v.toFixed(2), x, yMid + 16);
+        ctx.fillText('h['+i+']', x, yMid + 28);
+      });
+    }
+
+    const irMid1 = row1T + row1H * 0.5;
+    drawIR(irMin, colL, colR, irMid1, COL.accent);
+    drawIR(irMaxArr, colL2, colR2, irMid1, COL.pink);
+
+    // Phase responses
+    function drawPhase(rr, x1, x2, yTop, yH, color) {
+      let phaseData = [];
+      let prevPhase = 0;
+      for (let i = 0; i <= N; i++) {
+        const ww = Math.PI * i / N;
+        const H = evalZeroPair(rr, angle, ww);
+        let ph = complexArg(H);
+        // Unwrap
+        while (ph - prevPhase > Math.PI) ph -= TAU;
+        while (ph - prevPhase < -Math.PI) ph += TAU;
+        prevPhase = ph;
+        phaseData.push(ph);
+      }
+
+      const phMin = Math.min(...phaseData);
+      const phMax = Math.max(...phaseData);
+      const phRange = Math.max(phMax - phMin, 0.1);
+
+      // Axes
+      ctx.strokeStyle = COL.gridLine;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(x1, yTop); ctx.lineTo(x1, yTop + yH);
+      ctx.lineTo(x2, yTop + yH);
+      ctx.stroke();
+
+      // Zero line if in range
+      const zeroY = yTop + yH - (0 - phMin) / phRange * yH;
+      if (zeroY > yTop && zeroY < yTop + yH) {
+        ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(x1, zeroY); ctx.lineTo(x2, zeroY); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      for (let i = 0; i <= N; i++) {
+        const x = x1 + (x2 - x1) * i / N;
+        const y = yTop + yH - (phaseData[i] - phMin) / phRange * yH;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = COL.text;
+      ctx.font = '8px "JetBrains Mono"';
+      ctx.textAlign = 'left';
+      ctx.fillText((phMax / Math.PI).toFixed(1) + 'π', x1 + 4, yTop + 10);
+      ctx.fillText((phMin / Math.PI).toFixed(1) + 'π', x1 + 4, yTop + yH - 4);
+      ctx.textAlign = 'center';
+      ctx.fillText('0', x1, yTop + yH + 12);
+      ctx.fillText('π', x2, yTop + yH + 12);
+    }
+
+    drawPhase(r, colL, colR, row2T, row2H, COL.accent);
+    drawPhase(rMax, colL2, colR2, row2T, row2H, COL.pink);
+
+    // Divider
+    ctx.strokeStyle = COL.gridLine;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(midX, 10); ctx.lineTo(midX, h - 10); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  crSlider.oninput = draw;
+  caSlider.oninput = draw;
+
+  btnSweep.onclick = function() {
+    if (animating) return;
+    animating = true;
+    const dur = 3000;
+    const start = performance.now();
+    function step(t) {
+      const p = Math.min((t - start) / dur, 1);
+      // Sweep from 0.15 to 0.95 and back
+      const v = p < 0.5 ? 0.15 + (0.95 - 0.15) * (p * 2) : 0.95 - (0.95 - 0.15) * ((p - 0.5) * 2);
+      crSlider.value = v;
+      draw();
+      if (p < 1) requestAnimationFrame(step);
+      else animating = false;
+    }
+    requestAnimationFrame(step);
+  };
+
+  draw();
+  window.addEventListener('resize', () => {
+    ({ ctx, w, h } = setupCanvas('ccompare'));
+    draw();
+  });
+})();
+
+// ============================================================
+// SECTION 4: ALLPASS
+// ============================================================
+(function() {
+  let { ctx, w, h } = setupCanvas('callpass');
+  const apSlider = document.getElementById('apSlider');
+  const apVal = document.getElementById('apVal');
+  const btnAP = document.getElementById('btnAnimateAP');
+  let animating = false;
+
+  function draw() {
+    const a = parseFloat(apSlider.value);
+    apVal.textContent = a.toFixed(2);
+    ctx.clearRect(0, 0, w, h);
+
+    const N = 256;
+    const zpCx = w * 0.2, zpCy = h * 0.5, zpR = Math.min(w * 0.15, h * 0.35);
+    const plotL = w * 0.42, plotR = w - 20;
+    const magTop = 30, magH = h * 0.32;
+    const phTop = h * 0.52, phH = h * 0.35;
+
+    // Z-plane
+    ctx.strokeStyle = COL.gridLine;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.arc(zpCx, zpCy, zpR, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.arc(zpCx, zpCy, zpR * 1.5, 0, TAU); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(zpCx - zpR * 1.6, zpCy); ctx.lineTo(zpCx + zpR * 1.6, zpCy);
+    ctx.moveTo(zpCx, zpCy - zpR * 1.6); ctx.lineTo(zpCx, zpCy + zpR * 1.6);
+    ctx.stroke();
+
+    // Unit circle
+    ctx.strokeStyle = COL.accent;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.arc(zpCx, zpCy, zpR, 0, TAU); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Allpass: H(z) = (z^-1 - a) / (1 - a*z^-1)
+    // Zero at z = a, Pole at z = 1/a
+    const zeroX = zpCx + a * zpR;
+    const poleX = zpCx + (a !== 0 ? 1/a : 0) * zpR;
+    const showPole = Math.abs(1/a) < 2;
+
+    // Zero
+    ctx.strokeStyle = COL.gold;
+    ctx.lineWidth = 2.5;
+    const s = 6;
+    ctx.beginPath(); ctx.moveTo(zeroX-s, zpCy-s); ctx.lineTo(zeroX+s, zpCy+s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(zeroX+s, zpCy-s); ctx.lineTo(zeroX-s, zpCy+s); ctx.stroke();
+
+    // Pole
+    if (showPole && Math.abs(a) > 0.05) {
+      const px = Math.max(zpCx - zpR*1.5, Math.min(zpCx + zpR*1.5, poleX));
+      ctx.strokeStyle = COL.purple;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(px, zpCy, 6, 0, TAU); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px-4, zpCy); ctx.lineTo(px+4, zpCy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, zpCy-4); ctx.lineTo(px, zpCy+4); ctx.stroke();
+    }
+
+    // Labels
+    ctx.fillStyle = COL.gold;
+    ctx.font = '10px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText('zero', zeroX, zpCy - 14);
+    ctx.fillStyle = COL.text;
+    ctx.fillText('ALLPASS Z-PLANE', zpCx, zpCy + zpR * 1.7);
+
+    // Magnitude response — should be flat at 0 dB
+    ctx.fillStyle = COL.text;
+    ctx.font = '10px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText('MAGNITUDE (dB)', (plotL + plotR)/2, magTop - 8);
+
+    ctx.strokeStyle = COL.gridLine;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(plotL, magTop); ctx.lineTo(plotL, magTop + magH);
+    ctx.lineTo(plotR, magTop + magH); ctx.stroke();
+
+    // Flat line
+    ctx.strokeStyle = COL.gold;
+    ctx.lineWidth = 2;
+    const flatY = magTop + magH * 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, flatY); ctx.lineTo(plotR, flatY); ctx.stroke();
+
+    ctx.fillStyle = COL.gold;
+    ctx.font = '10px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.fillText('0 dB (unity)', plotL + 8, flatY - 8);
+
+    // Phase response
+    ctx.fillStyle = COL.text;
+    ctx.font = '10px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText('PHASE', (plotL + plotR)/2, phTop - 8);
+
+    ctx.strokeStyle = COL.gridLine;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(plotL, phTop); ctx.lineTo(plotL, phTop + phH);
+    ctx.lineTo(plotR, phTop + phH); ctx.stroke();
+
+    let phaseData = [];
+    let prev = 0;
+    for (let i = 0; i <= N; i++) {
+      const ww = Math.PI * i / N;
+      const ejnw = [Math.cos(-ww), Math.sin(-ww)];
+      // H(z) = (z^-1 - a) / (1 - a*z^-1)
+      const num = [ejnw[0] - a, ejnw[1]];
+      const den = [1 - a * ejnw[0], -a * ejnw[1]];
+      const H = complexDiv(num, den);
+      let ph = complexArg(H);
+      while (ph - prev > Math.PI) ph -= TAU;
+      while (ph - prev < -Math.PI) ph += TAU;
+      prev = ph;
+      phaseData.push(ph);
+    }
+
+    const phMin = Math.min(...phaseData);
+    const phMax = Math.max(...phaseData);
+    const phRange = Math.max(phMax - phMin, 0.01);
+
+    ctx.beginPath();
+    ctx.strokeStyle = COL.gold;
+    ctx.lineWidth = 2;
+    for (let i = 0; i <= N; i++) {
+      const x = plotL + (plotR - plotL) * i / N;
+      const y = phTop + phH - (phaseData[i] - phMin) / phRange * phH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = COL.text;
+    ctx.font = '8px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.fillText((phMax/Math.PI).toFixed(1) + 'π', plotL + 4, phTop + 10);
+    ctx.fillText((phMin/Math.PI).toFixed(1) + 'π', plotL + 4, phTop + phH - 4);
+    ctx.textAlign = 'center';
+    ctx.fillText('0', plotL, phTop + phH + 12);
+    ctx.fillText('π', plotR, phTop + phH + 12);
+  }
+
+  apSlider.oninput = draw;
+  btnAP.onclick = function() {
+    if (animating) return;
+    animating = true;
+    const dur = 3000;
+    const start = performance.now();
+    function step(t) {
+      const p = Math.min((t - start) / dur, 1);
+      const v = -0.9 + 1.8 * (0.5 + 0.5 * Math.sin(p * TAU - Math.PI/2));
+      apSlider.value = v;
+      draw();
+      if (p < 1) requestAnimationFrame(step);
+      else animating = false;
+    }
+    requestAnimationFrame(step);
+  };
+
+  draw();
+  window.addEventListener('resize', () => {
+    ({ ctx, w, h } = setupCanvas('callpass'));
+    draw();
+  });
+})();
+
+// ============================================================
+// SECTION 5: GROUP DELAY
+// ============================================================
+(function() {
+  let { ctx, w, h } = setupCanvas('cgdelay');
+  const gdSlider = document.getElementById('gdSlider');
+  const gdVal = document.getElementById('gdVal');
+  const btnGD = document.getElementById('btnAnimateGD');
+  let animating = false;
+
+  function draw() {
+    const r = parseFloat(gdSlider.value);
+    gdVal.textContent = r.toFixed(2);
+    const rMax = 1 / r;
+    const angle = Math.PI / 3; // fixed 60°
+    ctx.clearRect(0, 0, w, h);
+
+    const N = 256;
+    const plotL = 50, plotR = w - 20;
+    const topY = 40, plotH = h * 0.38;
+    const botY = h * 0.56, botH = h * 0.36;
+
+    // Compute group delay via finite difference of phase
+    function groupDelay(rr) {
+      let gd = [];
+      const dw = Math.PI / N;
+      let prevPhase = 0;
+      let phases = [];
+      for (let i = 0; i <= N; i++) {
+        const ww = dw * i;
+        const H = evalZeroPair(rr, angle, ww);
+        let ph = complexArg(H);
+        while (ph - prevPhase > Math.PI) ph -= TAU;
+        while (ph - prevPhase < -Math.PI) ph += TAU;
+        prevPhase = ph;
+        phases.push(ph);
+      }
+      for (let i = 0; i < N; i++) {
+        gd.push(-(phases[i+1] - phases[i]) / dw);
+      }
+      return gd;
+    }
+
+    const gdMin = groupDelay(r);
+    const gdMaxArr = groupDelay(rMax);
+
+    // Labels
+    ctx.fillStyle = COL.text;
+    ctx.font = '10px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText('GROUP DELAY (samples)', (plotL + plotR)/2, topY - 12);
+    ctx.fillText('CUMULATIVE ENERGY', (plotL + plotR)/2, botY - 12);
+
+    // GD plot
+    const allGD = [...gdMin, ...gdMaxArr];
+    const gdPlotMin = Math.min(...allGD) - 0.2;
+    const gdPlotMax = Math.max(...allGD) + 0.2;
+
+    ctx.strokeStyle = COL.gridLine;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(plotL, topY); ctx.lineTo(plotL, topY + plotH);
+    ctx.lineTo(plotR, topY + plotH); ctx.stroke();
+
+    function drawGDLine(data, color) {
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < data.length; i++) {
+        const x = plotL + (plotR - plotL) * i / data.length;
+        const y = topY + plotH - (data[i] - gdPlotMin) / (gdPlotMax - gdPlotMin) * plotH;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    drawGDLine(gdMin, COL.accent);
+    drawGDLine(gdMaxArr, COL.pink);
+
+    // Legend
+    ctx.fillStyle = COL.accent;
+    ctx.font = '10px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.fillText('● Min-phase', plotR - 200, topY + 16);
+    ctx.fillStyle = COL.pink;
+    ctx.fillText('● Max-phase', plotR - 100, topY + 16);
+
+    // Axis labels
+    ctx.fillStyle = COL.text;
+    ctx.font = '8px "JetBrains Mono"';
+    ctx.textAlign = 'right';
+    ctx.fillText(gdPlotMax.toFixed(1), plotL - 4, topY + 10);
+    ctx.fillText(gdPlotMin.toFixed(1), plotL - 4, topY + plotH);
+    ctx.textAlign = 'center';
+    ctx.fillText('ω → π', plotR - 10, topY + plotH + 12);
+
+    // Cumulative energy (for impulse response)
+    const irM = irZeroPair(r, angle);
+    const irX = irZeroPair(rMax, angle);
+
+    function cumEnergy(ir) {
+      let ce = [];
+      let sum = 0;
+      for (let i = 0; i < ir.length; i++) {
+        sum += ir[i] * ir[i];
+        ce.push(sum);
+      }
+      const total = sum;
+      return ce.map(v => v / total);
+    }
+
+    const ceMin = cumEnergy(irM);
+    const ceMax = cumEnergy(irX);
+
+    // Axes
+    ctx.strokeStyle = COL.gridLine;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(plotL, botY); ctx.lineTo(plotL, botY + botH);
+    ctx.lineTo(plotR, botY + botH); ctx.stroke();
+
+    function drawCE(ce, color) {
+      const barW = (plotR - plotL) / (ce.length * 3);
+      ce.forEach((v, i) => {
+        const x = plotL + 60 + i * 80;
+        const bh = v * botH * 0.85;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.6;
+        ctx.fillRect(x - barW, botY + botH - bh, barW * 2, bh);
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = color;
+        ctx.font = '10px "JetBrains Mono"';
+        ctx.textAlign = 'center';
+        ctx.fillText((v * 100).toFixed(0) + '%', x, botY + botH - bh - 8);
+        ctx.fillStyle = COL.text;
+        ctx.fillText('n=' + i, x, botY + botH + 14);
+      });
+    }
+
+    // Offset bars slightly
+    const off = 12;
+    function drawCEOffset(ce, color, dx) {
+      const spacing = Math.min(100, (plotR - plotL - 80) / ce.length);
+      ce.forEach((v, i) => {
+        const x = plotL + 70 + i * spacing + dx;
+        const bh = v * botH * 0.8;
+        const barW = 14;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.7;
+        ctx.fillRect(x - barW/2, botY + botH - bh, barW, bh);
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = color;
+        ctx.font = '9px "JetBrains Mono"';
+        ctx.textAlign = 'center';
+        ctx.fillText((v*100).toFixed(0)+'%', x, botY + botH - bh - 6);
+      });
+    }
+
+    drawCEOffset(ceMin, COL.accent, -off);
+    drawCEOffset(ceMax, COL.pink, off);
+
+    // n labels
+    const spacing = Math.min(100, (plotR - plotL - 80) / ceMin.length);
+    ceMin.forEach((_, i) => {
+      const x = plotL + 70 + i * spacing;
+      ctx.fillStyle = COL.text;
+      ctx.font = '9px "JetBrains Mono"';
+      ctx.textAlign = 'center';
+      ctx.fillText('n≤' + i, x, botY + botH + 14);
+    });
+  }
+
+  gdSlider.oninput = draw;
+  btnGD.onclick = function() {
+    if (animating) return;
+    animating = true;
+    const dur = 3000;
+    const start = performance.now();
+    function step(t) {
+      const p = Math.min((t - start) / dur, 1);
+      const v = 0.15 + 0.8 * (0.5 + 0.5 * Math.sin(p * TAU - Math.PI/2));
+      gdSlider.value = v;
+      draw();
+      if (p < 1) requestAnimationFrame(step);
+      else animating = false;
+    }
+    requestAnimationFrame(step);
+  };
+
+  draw();
+  window.addEventListener('resize', () => {
+    ({ ctx, w, h } = setupCanvas('cgdelay'));
+    draw();
+  });
+})();
+
+// ============================================================
+// SCROLL REVEAL & TOC
+// ============================================================
+(function() {
+  const reveals = document.querySelectorAll('.reveal');
+  const sections = document.querySelectorAll('section[id]');
+  const toc = document.getElementById('toc');
+
+  sections.forEach(s => {
+    const a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.title = s.dataset.title;
+    toc.appendChild(a);
+  });
+
+  const tocLinks = toc.querySelectorAll('a');
+
+  function onScroll() {
+    reveals.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.85) el.classList.add('visible');
+    });
+
+    let current = '';
+    sections.forEach(s => {
+      if (s.getBoundingClientRect().top < window.innerHeight * 0.4) current = s.id;
+    });
+    tocLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>
