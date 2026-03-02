@@ -2,9 +2,8 @@
 
 An animated, interactive visual guide to minimum-phase and maximum-phase digital filters. Built as a single self-contained HTML page with no dependencies, designed for GitHub Pages deployment.
 
-[Guide](https://brendanjameslynskey.github.io/MinimumMaximumPhaseFilters/)
+[View the guide](https://brendanjameslynskey.github.io/MinimumMaximumPhaseFilters/)
 
-![Guide Preview](preview.png)
 
 ## What's Inside
 
