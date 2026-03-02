@@ -2,6 +2,8 @@
 
 An animated, interactive visual guide to minimum-phase and maximum-phase digital filters. Built as a single self-contained HTML page with no dependencies, designed for GitHub Pages deployment.
 
+[Guide](https://brendanjameslynskey.github.io/MinimumMaximumPhaseFilters/)
+
 ![Guide Preview](preview.png)
 
 ## What's Inside
@@ -16,14 +18,6 @@ The guide walks through the theory and intuition behind filter phase behaviour a
 
 Every section includes animated sweep/flip buttons so you can sit back and watch the relationships unfold.
 
-## Deploy to GitHub Pages
-
-1. Fork or clone this repository
-2. In your repo settings, go to **Settings → Pages**
-3. Set the source to the branch containing `index.html` (e.g. `main`, root)
-4. Your guide will be live at `https://<username>.github.io/<repo-name>/`
-
-No build step required — it's a single HTML file.
 
 ## Technical Details
 
